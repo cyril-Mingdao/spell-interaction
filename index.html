@@ -200,6 +200,11 @@
         border: 2px solid rgba(255,255,255,0.85);
     }
     .res-group.none { border: 2px dashed #888; color: #888; background: transparent; font-size: 1.1rem; }
+    /* 結果頁也能選組：透明的選單疊在組別色塊上，點了直接跳出組別清單 */
+    .res-group select {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        opacity: 0; cursor: pointer; font-size: 16px;
+    }
     .res-tone {
         position: absolute; bottom: 0.5rem; right: 0.8rem;
         display: flex; align-items: center; gap: 0.4rem;
@@ -265,7 +270,7 @@
     </section>
 
     <section id="result" aria-live="polite">
-        <div class="res-group none" id="res-group">未選組別</div>
+        <div class="res-group none" id="res-group"><span id="res-group-text">未選組別 ▾</span><select id="res-group-select" aria-label="選擇組別"></select></div>
         <div class="res-tone">第 <b id="res-tone-num">5</b> 調</div>
         <div class="res-word" id="res-word"></div>
         <div class="res-hint">點一下畫面任何位置，回到組合頁</div>
@@ -518,7 +523,30 @@
     }
 
     function renderGroup() {
+        ['group-select', 'res-group-select'].forEach(fillGroupOptions);
+        $('res-group-select').value = group ? String(group) : '';
         const sel = $('group-select');
+        sel.value = group ? String(group) : '';
+        const badge = $('res-group');
+        const text = $('res-group-text');
+        if (group) {
+            const [bg, fg] = GROUP_COLORS[group - 1];
+            sel.classList.add('chosen');
+            sel.style.background = bg; sel.style.color = fg;
+            badge.className = 'res-group';
+            badge.style.background = bg; badge.style.color = fg;
+            text.textContent = `第 ${group} 組`;
+        } else {
+            sel.classList.remove('chosen');
+            sel.style.background = ''; sel.style.color = '';
+            badge.className = 'res-group none';
+            badge.style.background = ''; badge.style.color = '';
+            text.textContent = '未選組別 ▾';
+        }
+    }
+
+    function fillGroupOptions(id) {
+        const sel = $(id);
         if (!sel.options.length) {
             const ph = document.createElement('option');
             ph.value = ''; ph.textContent = '組別'; ph.disabled = true;
@@ -528,22 +556,6 @@
                 o.value = String(g); o.textContent = `第 ${g} 組`;
                 sel.appendChild(o);
             }
-        }
-        sel.value = group ? String(group) : '';
-        const badge = $('res-group');
-        if (group) {
-            const [bg, fg] = GROUP_COLORS[group - 1];
-            sel.classList.add('chosen');
-            sel.style.background = bg; sel.style.color = fg;
-            badge.className = 'res-group';
-            badge.style.background = bg; badge.style.color = fg;
-            badge.textContent = `第 ${group} 組`;
-        } else {
-            sel.classList.remove('chosen');
-            sel.style.background = ''; sel.style.color = '';
-            badge.className = 'res-group none';
-            badge.style.background = ''; badge.style.color = '';
-            badge.textContent = '未選組別';
         }
     }
 
@@ -583,11 +595,15 @@
         fitLabels($('compose'));
     }
 
-    $('group-select').addEventListener('change', (e) => {
-        group = parseInt(e.target.value, 10) || null;
+    $('res-group').addEventListener('pointerdown', e => e.stopPropagation());
+    $('res-group-select').addEventListener('change', e => setGroup(e.target.value));
+    function setGroup(v) {
+        group = parseInt(v, 10) || null;
         try { localStorage.setItem('taigi-spell-answer-group', group ? String(group) : ''); } catch (err) {}
         renderGroup();
-    });
+        resultShownAt = Date.now();   // 選完組別關閉清單的那一下，不要順便關掉結果頁
+    }
+    $('group-select').addEventListener('change', e => setGroup(e.target.value));
     $('final-scroll').addEventListener('scroll', syncActiveTab, { passive: true });
 
     // ---------- 互動 ----------
