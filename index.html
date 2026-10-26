@@ -1,0 +1,720 @@
+<!doctype html>
+<!--
+  【著作權聲明】
+  羅馬字拼音答題 — 課堂即時答題：學生以手機選聲母、韻母、聲調，組成台羅後全螢幕舉牌給教師確認
+  Copyright © 2026 詹宗龍（臺中明道中學）. All rights reserved.
+  本網頁之程式碼、版面與教案設計著作權屬詹宗龍所有，僅供非營利之教育教學使用。
+  未經著作權人書面授權，不得重製、改作、散布或修改本網頁之全部或一部分。
+  拼音依教育部《臺灣台語羅馬字拼音方案》，其著作權屬原權利人。
+-->
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="author" content="詹宗龍（臺中明道中學）">
+<meta name="copyright" content="© 2026 詹宗龍（臺中明道中學）。保留一切權利。">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>羅馬字拼音答題</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@500;800&family=Noto+Sans+TC:wght@500;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --black: #111111;
+        --yellow: #FFD400;
+        --white: #FFFFFF;
+        --gray-d: #2A2A2A;
+        --gray-l: #F5F5F5;
+        --line: #444444;
+        --font: 'Noto Sans', 'Noto Sans TC', 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+        width: 100%; height: 100%; overflow: hidden;
+        background: var(--black); color: var(--white);
+        font-family: var(--font);
+        user-select: none; -webkit-user-select: none;
+        touch-action: manipulation;
+        overscroll-behavior: none;
+    }
+    button { font-family: inherit; color: inherit; border: none; background: none; cursor: pointer; }
+
+    /* 一律橫式：直拿手機時用 CSS 把整個畫面轉 90 度 */
+    #stage {
+        position: fixed; top: 0; left: 0;
+        transform-origin: 0 0;
+        overflow: hidden;
+        background: var(--black);
+    }
+
+    /* ===== 組合頁 ===== */
+    #compose {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        padding: 0.35rem 0.5rem 0.45rem;
+        gap: 0.35rem;
+    }
+    .topbar {
+        flex: 0 0 auto;
+        display: flex; align-items: center; gap: 0.45rem;
+        height: 2.6rem;
+    }
+    /* 組別選單：選定後整塊換成該組顏色 */
+    .group-select {
+        height: 100%; min-width: 7.2rem;
+        padding: 0 0.6rem;
+        border-radius: 0.5rem;
+        border: 2px dashed var(--yellow);
+        background: var(--black); color: var(--yellow);
+        font-family: 'Noto Sans TC', var(--font);
+        font-weight: 800; font-size: 1.05rem;
+        text-align: center; text-align-last: center;
+        appearance: none; -webkit-appearance: none;
+        cursor: pointer; outline: none;
+    }
+    .group-select.chosen { border: 2px solid rgba(255,255,255,0.85); }
+    .group-select option { background: var(--white); color: var(--black); }
+    .combo {
+        flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.3rem;
+        height: 100%;
+    }
+    .slot {
+        min-width: 4.2rem; height: 100%;
+        border: 2px dashed var(--line); border-radius: 0.5rem;
+        display: flex; align-items: center; justify-content: center; gap: 0.3rem;
+        padding: 0 0.6rem;
+        font-weight: 800; font-size: 1.3rem;
+        color: #777;
+    }
+    .slot small { font-size: 0.7rem; font-weight: 500; }
+    .slot.filled { border: 2px solid var(--yellow); color: var(--yellow); }
+    .slot.filled small { color: #BBB; }
+    .plus { color: #777; font-weight: 800; font-size: 1.1rem; }
+    .tool-btn {
+        height: 100%; padding: 0 0.7rem;
+        border-radius: 0.5rem;
+        background: var(--gray-d); border: 2px solid var(--line);
+        font-size: 0.85rem; font-weight: 800; white-space: nowrap;
+    }
+    .tool-btn:active { background: var(--yellow); color: var(--black); }
+
+    .panels { flex: 1; min-height: 0; display: flex; gap: 0.45rem; }
+    .panel {
+        min-width: 0; display: flex; flex-direction: column;
+        background: #1A1A1A; border: 2px solid var(--gray-d); border-radius: 0.6rem;
+        padding: 0.3rem;
+        gap: 0.3rem;
+    }
+    .panel-initial { flex: 3.1; }
+    .panel-final   { flex: 6.2; }
+    .panel-tone    { flex: 2; }
+    .panel-title {
+        flex: 0 0 auto;
+        background: var(--yellow); color: var(--black);
+        font-weight: 800; font-size: 0.85rem; text-align: center;
+        border-radius: 0.35rem; padding: 0.1rem 0;
+        letter-spacing: 0.3em;
+    }
+    .grid { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+    .grid-row { flex: 1; min-height: 0; display: flex; gap: 0.3rem; }
+    .tile {
+        flex: 1 1 0; min-width: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--gray-d); border: 2px solid #3A3A3A; border-radius: 0.45rem;
+        font-weight: 800; font-size: 1.2rem; line-height: 1;
+        color: var(--white);
+        transition: transform 0.08s;
+    }
+    .tile:active { transform: scale(0.94); }
+    .tile.selected { background: var(--yellow); border-color: var(--yellow); color: var(--black); }
+    .tile.zero { font-size: 1rem; font-family: 'Noto Sans TC', var(--font); }
+    .tile.ghost { visibility: hidden; }
+    .tile { overflow: hidden; padding: 0 0.12rem; }
+    /* 文字標籤：由 fitLabels() 依按鈕寬度自動縮小，不會溢出框 */
+    .lbl { display: inline-block; white-space: nowrap; }
+
+    /* 韻母：全部類別分區排在一個可下滑的區域，上方按鈕可快速跳到該區 */
+    .final-scroll {
+        flex: 1; min-height: 0;
+        overflow-y: auto; overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+        position: relative;
+        padding-right: 0.15rem;
+    }
+    .final-section { padding-bottom: 0.5rem; }
+    .final-section-title {
+        position: sticky; top: 0; z-index: 1;
+        background: #1A1A1A;
+        padding: 0.15rem 0 0.25rem;
+        font-family: 'Noto Sans TC', var(--font);
+        font-weight: 800; font-size: 0.8rem; color: var(--yellow);
+        display: flex; align-items: center; gap: 0.4rem;
+    }
+    .final-section-title::after { content: ''; flex: 1; height: 2px; background: #3A3A3A; }
+    /* 欄數依面板寬度自動決定，各類別韻母連續排滿整列，不留右側空白 */
+    .final-grid { display: grid; grid-template-columns: repeat(var(--final-cols, 6), 1fr); gap: 0.3rem; }
+    .final-grid .tile { height: 2.9rem; }
+
+    .tabs { flex: 0 0 auto; display: flex; gap: 0.25rem; }
+    .tab {
+        flex: 1 1 0; min-width: 0;
+        padding: 0.28rem 0.1rem;
+        border-radius: 0.35rem;
+        background: var(--gray-d); border: 2px solid #3A3A3A;
+        font-size: 0.8rem; font-weight: 800; white-space: nowrap; overflow: hidden;
+        color: #DDD;
+    }
+    .tab.active { background: var(--white); border-color: var(--white); color: var(--black); }
+    .tab.has-pick { box-shadow: inset 0 -0.25rem 0 var(--yellow); }
+
+    .tone-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 0.3rem; }
+    .tone-grid .tile { flex-direction: column; gap: 0.1rem; }
+    .tone-grid .tile .n { font-size: 1.25rem; }
+    .tone-grid .tile .ex { font-size: 0.75rem; font-weight: 500; opacity: 0.8; }
+    .tone-grid .tile:last-child { grid-column: span 2; }
+
+    /* ===== 結果頁（全螢幕舉牌） ===== */
+    #result {
+        position: absolute; inset: 0;
+        background: var(--black);
+        display: none;
+        flex-direction: column; align-items: center; justify-content: center;
+        z-index: 10;
+    }
+    #result.show { display: flex; }
+    #result { padding-top: 2.4rem; padding-bottom: 2.4rem; }
+    .res-group {
+        position: absolute; top: 0.6rem; left: 50%; transform: translateX(-50%);
+        white-space: nowrap;
+        padding: 0.25rem 1rem;
+        border-radius: 0.5rem;
+        font-family: 'Noto Sans TC', var(--font);
+        font-weight: 800; font-size: 1.6rem; line-height: 1.3;
+        border: 2px solid rgba(255,255,255,0.85);
+    }
+    .res-group.none { border: 2px dashed #888; color: #888; background: transparent; font-size: 1.1rem; }
+    .res-tone {
+        position: absolute; bottom: 0.5rem; right: 0.8rem;
+        display: flex; align-items: center; gap: 0.4rem;
+        font-weight: 800; color: var(--white); font-size: 1.1rem;
+        font-family: 'Noto Sans TC', var(--font);
+    }
+    .res-tone b {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 2.4rem; height: 2.4rem; border-radius: 50%;
+        background: var(--yellow); color: var(--black); font-size: 1.5rem;
+    }
+    .res-word { display: flex; align-items: stretch; gap: 0.06em; line-height: 1; }
+    .res-block {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        border-radius: 0.12em;
+        padding: 0.14em 0.16em 0.08em;
+    }
+    .res-block .txt { font-weight: 800; white-space: nowrap; letter-spacing: 0.01em; }
+    .res-block .cat {
+        font-family: 'Noto Sans TC', var(--font);
+        font-weight: 800; font-size: 0.16em;
+        margin-top: 0.15em; white-space: nowrap;
+        padding: 0.12em 0.6em; border-radius: 1em;
+        background: rgba(0,0,0,0.78); color: var(--white);
+    }
+    .res-block.zero { border: 0.04em dashed #BDBDBD; background: transparent; color: #BDBDBD; }
+    .res-block.zero .txt { font-weight: 500; }
+    .res-hint {
+        position: absolute; bottom: 0.5rem; left: 0; right: 0; text-align: center;
+        font-size: 0.75rem; color: #888; font-family: 'Noto Sans TC', var(--font);
+    }
+</style>
+</head>
+<body>
+<div id="stage">
+    <section id="compose">
+        <div class="topbar">
+            <select class="group-select" id="group-select" aria-label="組別"></select>
+            <div class="combo">
+                <div class="slot" id="slot-initial"><small>聲母</small></div>
+                <span class="plus">+</span>
+                <div class="slot" id="slot-final"><small>韻母</small></div>
+                <span class="plus">+</span>
+                <div class="slot" id="slot-tone"><small>聲調</small></div>
+            </div>
+            <button class="tool-btn" id="btn-clear">清除</button>
+            <button class="tool-btn" id="btn-fs" title="全螢幕">⛶ 全螢幕</button>
+        </div>
+        <div class="panels">
+            <div class="panel panel-initial">
+                <div class="panel-title">聲母</div>
+                <div class="grid" id="grid-initial"></div>
+            </div>
+            <div class="panel panel-final">
+                <div class="tabs" id="final-tabs"></div>
+                <div class="final-scroll" id="final-scroll"></div>
+            </div>
+            <div class="panel panel-tone">
+                <div class="panel-title">聲調</div>
+                <div class="tone-grid" id="grid-tone"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="result" aria-live="polite">
+        <div class="res-group none" id="res-group">未選組別</div>
+        <div class="res-tone">第 <b id="res-tone-num">5</b> 調</div>
+        <div class="res-word" id="res-word"></div>
+        <div class="res-hint">點一下畫面任何位置，回到組合頁</div>
+    </section>
+</div>
+
+<script>
+/*! 羅馬字拼音答題 — © 2026 詹宗龍（臺中明道中學）保留一切權利。 */
+(function () {
+    'use strict';
+
+    // ---------- 資料 ----------
+    // 聲母依發音部位分類；色塊高彩度、文字色依底色選黑或白以確保對比
+    const INITIAL_CATS = {
+        lip:    { name: '雙唇音', bg: '#E53935', fg: '#FFFFFF' },
+        tongue: { name: '舌尖音', bg: '#1E5BD8', fg: '#FFFFFF' },
+        root:   { name: '舌根音', bg: '#12A150', fg: '#FFFFFF' },
+        teeth:  { name: '齒音',   bg: '#8E24AA', fg: '#FFFFFF' },
+        throat: { name: '喉音',   bg: '#FF8F00', fg: '#111111' },
+        zero:   { name: '無聲母', bg: 'transparent', fg: '#BDBDBD' }
+    };
+    const INITIAL_ROWS = [
+        { cat: 'lip',    items: ['p', 'ph', 'm', 'b'] },
+        { cat: 'tongue', items: ['t', 'th', 'n', 'l'] },
+        { cat: 'root',   items: ['k', 'kh', 'ng', 'g'] },
+        { cat: 'teeth',  items: ['ts', 'tsh', 's', 'j'] },
+        { cat: 'throat', items: ['h'], zeroAfter: true }
+    ];
+
+    const FINAL_CATS = {
+        vowel:    { name: '單元音',      bg: '#FFD400', fg: '#111111' },
+        syllabic: { name: '聲化韻',      bg: '#B388FF', fg: '#111111' },
+        diph:     { name: '複元音',      bg: '#00E5FF', fg: '#111111' },
+        nasal:    { name: '鼻化韻',      bg: '#FF5CB8', fg: '#111111' },
+        coda:     { name: '鼻音韻尾',    bg: '#76FF03', fg: '#111111' },
+        stopH:    { name: '入聲 -h',     bg: '#FFFFFF', fg: '#111111' },
+        stopPTK:  { name: '入聲 -p -t -k', bg: '#8D6E63', fg: '#FFFFFF' }
+    };
+    // 每個分頁含若干列；列內每個韻母標上所屬類別
+    const FINAL_TABS = [
+        { label: '單元音', title: '單元音／聲化韻', rows: [
+            { cat: 'vowel',    items: ['a', 'i', 'u', 'e', 'oo', 'o'] },
+            { cat: 'syllabic', items: ['m', 'ng'] }
+        ]},
+        { label: '複元音', title: '複元音', rows: [
+            { cat: 'diph', items: ['ai', 'au', 'ia', 'iu', 'io'] },
+            { cat: 'diph', items: ['ua', 'ue', 'iau', 'ui', 'uai'] }
+        ]},
+        { label: '鼻化韻', title: '鼻化韻', rows: [
+            { cat: 'nasal', items: ['ann', 'inn', 'enn', 'onn'] },
+            { cat: 'nasal', items: ['ainn', 'aunn', 'iann', 'iunn'] },
+            { cat: 'nasal', items: ['uinn', 'iaunn', 'uann', 'uainn'] }
+        ]},
+        { label: '鼻音尾', title: '鼻音韻尾 -m -n -ng', rows: [
+            { cat: 'coda', items: ['am', 'im', 'om', 'iam'] },
+            { cat: 'coda', items: ['an', 'in', 'un', 'ian', 'uan'] },
+            { cat: 'coda', items: ['ang', 'ing', 'ong', 'iang', 'iong', 'uang'] }
+        ]},
+        { label: '入聲h', title: '入聲 -h', rows: [
+            { cat: 'stopH', items: ['ah', 'ih', 'uh', 'eh', 'oh'] },
+            { cat: 'stopH', items: ['auh', 'iah', 'iuh', 'ioh'] },
+            { cat: 'stopH', items: ['uah', 'uih', 'ueh', 'iauh'] },
+            { cat: 'stopH', items: ['annh', 'ennh', 'innh', 'onnh'] }
+        ]},
+        { label: '入聲ptk', title: '入聲 -p -t -k', rows: [
+            { cat: 'stopPTK', items: ['ap', 'ip', 'op', 'iap'] },
+            { cat: 'stopPTK', items: ['at', 'it', 'ut', 'iat', 'uat'] },
+            { cat: 'stopPTK', items: ['ak', 'ik', 'ok', 'iak', 'iok'] }
+        ]}
+    ];
+
+    // 第 1～20 組各一個底色，文字色依底色選黑或白
+    const GROUP_COLORS = [
+        ['#E53935', '#FFFFFF'], ['#1E88E5', '#FFFFFF'], ['#43A047', '#FFFFFF'], ['#FDD835', '#111111'],
+        ['#8E24AA', '#FFFFFF'], ['#FB8C00', '#111111'], ['#00ACC1', '#111111'], ['#D81B60', '#FFFFFF'],
+        ['#6D4C41', '#FFFFFF'], ['#7CB342', '#111111'], ['#3949AB', '#FFFFFF'], ['#F4511E', '#FFFFFF'],
+        ['#00897B', '#FFFFFF'], ['#C0CA33', '#111111'], ['#5E35B1', '#FFFFFF'], ['#FFB300', '#111111'],
+        ['#039BE5', '#111111'], ['#757575', '#FFFFFF'], ['#F06292', '#111111'], ['#FFFFFF', '#111111']
+    ];
+
+    const TONES = [
+        { n: '1', ex: 'a' }, { n: '2', ex: 'á' }, { n: '3', ex: 'à' }, { n: '4', ex: 'ah' },
+        { n: '5', ex: 'â' }, { n: '7', ex: 'ā' }, { n: '8', ex: 'a̍h' }
+    ];
+    const TONE_MARK = { '2': '́', '3': '̀', '5': '̂', '7': '̄', '8': '̍' };
+
+    // ---------- 自動標調符 ----------
+    // 教育部台羅標調位置：a > oo/o > e > (iu、ui 標後一字) > i/u > 成音節 m、ng（標在 m、n 上）
+    function markIndex(fin) {
+        // 只看主要元音部分，去掉鼻化 nn 與韻尾干擾
+        const core = fin.replace(/nn(h?)$/, '$1');
+        let i;
+        if ((i = core.indexOf('a')) >= 0) return i;
+        if ((i = core.indexOf('o')) >= 0) return i;          // oo 亦標第一個 o
+        if ((i = core.indexOf('e')) >= 0) return i;
+        if ((i = core.indexOf('iu')) >= 0) return i + 1;
+        if ((i = core.indexOf('ui')) >= 0) return i + 1;
+        if ((i = core.indexOf('i')) >= 0) return i;
+        if ((i = core.indexOf('u')) >= 0) return i;
+        if (fin === 'm' || fin === 'ng') return 0;              // m̄、n̂g
+        return -1;
+    }
+    function toneFinal(fin, tone) {
+        const mark = TONE_MARK[tone];
+        if (!mark) return fin;                                   // 第 1、4 調不標
+        const idx = markIndex(fin);
+        if (idx < 0) return fin;
+        return (fin.slice(0, idx + 1) + mark + fin.slice(idx + 1)).normalize('NFC');
+    }
+
+    // ---------- 狀態 ----------
+    const state = { initial: null, initialCat: null, final: null, finalCat: null, tone: null };
+    let activeTab = 0;
+    let group = null;
+    try { const g = parseInt(localStorage.getItem('taigi-spell-answer-group'), 10); if (g >= 1 && g <= 20) group = g; } catch (e) {}
+    let resultShownAt = 0;
+
+    const $ = (id) => document.getElementById(id);
+    const stage = $('stage');
+
+    // ---------- 繪製 ----------
+    function makeTile(text, onPick, extraClass) {
+        const b = document.createElement('button');
+        b.className = 'tile' + (extraClass ? ' ' + extraClass : '');
+        const s = document.createElement('span');
+        s.className = 'lbl';
+        s.textContent = text;
+        b.appendChild(s);
+        b.addEventListener('click', onPick);
+        return b;
+    }
+
+    function renderInitials() {
+        const grid = $('grid-initial');
+        grid.innerHTML = '';
+        INITIAL_ROWS.forEach(row => {
+            const r = document.createElement('div');
+            r.className = 'grid-row';
+            row.items.forEach(t => {
+                const tile = makeTile(t, () => pick('initial', t, row.cat));
+                tile.dataset.value = t;
+                if (state.initial === t) tile.classList.add('selected');
+                r.appendChild(tile);
+            });
+            if (row.zeroAfter) {
+                const z = makeTile('無聲母', () => pick('initial', '', 'zero'), 'zero');
+                z.style.flexGrow = '3';
+                z.dataset.value = '';
+                if (state.initial === '') z.classList.add('selected');
+                r.appendChild(z);
+            }
+            grid.appendChild(r);
+        });
+    }
+
+    // 上方類別按鈕：點了捲到該區；捲動時自動標出目前所在的區
+    function renderFinalTabs() {
+        const tabs = $('final-tabs');
+        tabs.innerHTML = '';
+        FINAL_TABS.forEach((tab, i) => {
+            const b = document.createElement('button');
+            b.className = 'tab' + (i === activeTab ? ' active' : '');
+            const picked = state.final !== null && tab.rows.some(r => r.items.includes(state.final));
+            if (picked) b.classList.add('has-pick');
+            const s = document.createElement('span');
+            s.className = 'lbl';
+            s.textContent = tab.label;
+            b.appendChild(s);
+            b.addEventListener('click', () => {
+                const sec = $('final-sec-' + i);
+                const box = $('final-scroll');
+                activeTab = i;
+                renderFinalTabs();
+                box.scrollTop = sec.offsetTop;
+            });
+            tabs.appendChild(b);
+        });
+        fitLabels(tabs);
+    }
+
+    // 同一組按鈕（聲母區、各韻母區、分類鈕）統一字級：
+    // 先量出每個標籤需要的縮小比例，整組取最小值，所以同區字一樣大而且都塞得進框
+    function fitLabels(root) {
+        const labels = [...root.querySelectorAll('.lbl')];
+        labels.forEach(l => { l.style.fontSize = ''; });
+        const groups = new Map();
+        labels.forEach(l => {
+            const box = l.parentElement;
+            const cs = getComputedStyle(box);
+            const avail = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+            const need = l.offsetWidth;
+            if (!avail || !need) return;
+            const ratio = Math.min(1, (avail * 0.9) / need);
+            const key = box.closest('.final-grid, .grid, .tabs') || box.parentElement;
+            const g = groups.get(key) || { ratio: 1, items: [] };
+            g.ratio = Math.min(g.ratio, ratio);
+            g.items.push([l, parseFloat(getComputedStyle(l).fontSize)]);
+            groups.set(key, g);
+        });
+        groups.forEach(g => {
+            if (g.ratio < 1) g.items.forEach(([l, f]) => { l.style.fontSize = (f * g.ratio).toFixed(1) + 'px'; });
+        });
+    }
+
+    // 依韻母面板寬度決定欄數：每格至少約 3.9rem 寬
+    function setFinalCols() {
+        const box = $('final-scroll');
+        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const cols = Math.max(4, Math.min(9, Math.floor((box.clientWidth + 0.3 * rem) / (4.2 * rem))));
+        box.style.setProperty('--final-cols', cols);
+    }
+
+    function renderFinals() {
+        const box = $('final-scroll');
+        const keep = box.scrollTop;
+        box.innerHTML = '';
+        FINAL_TABS.forEach((tab, i) => {
+            const sec = document.createElement('div');
+            sec.className = 'final-section';
+            sec.id = 'final-sec-' + i;
+            const h = document.createElement('div');
+            h.className = 'final-section-title';
+            h.textContent = tab.title;
+            const grid = document.createElement('div');
+            grid.className = 'final-grid';
+            tab.rows.forEach(row => {
+                row.items.forEach(t => {
+                    const tile = makeTile(t, () => pick('final', t, row.cat));
+                    if (state.final === t) tile.classList.add('selected');
+                    grid.appendChild(tile);
+                });
+            });
+            sec.append(h, grid);
+            box.appendChild(sec);
+        });
+        box.style.scrollBehavior = 'auto';
+        box.scrollTop = keep;
+        box.style.scrollBehavior = '';
+    }
+
+    function syncActiveTab() {
+        const box = $('final-scroll');
+        const y = box.scrollTop + 4;
+        let cur = 0;
+        FINAL_TABS.forEach((tab, i) => {
+            if ($('final-sec-' + i).offsetTop <= y) cur = i;
+        });
+        if (box.scrollTop + box.clientHeight >= box.scrollHeight - 2) cur = FINAL_TABS.length - 1;
+        if (cur !== activeTab) { activeTab = cur; renderFinalTabs(); }
+    }
+
+    function renderGroup() {
+        const sel = $('group-select');
+        if (!sel.options.length) {
+            const ph = document.createElement('option');
+            ph.value = ''; ph.textContent = '組別'; ph.disabled = true;
+            sel.appendChild(ph);
+            for (let g = 1; g <= 20; g++) {
+                const o = document.createElement('option');
+                o.value = String(g); o.textContent = `第 ${g} 組`;
+                sel.appendChild(o);
+            }
+        }
+        sel.value = group ? String(group) : '';
+        const badge = $('res-group');
+        if (group) {
+            const [bg, fg] = GROUP_COLORS[group - 1];
+            sel.classList.add('chosen');
+            sel.style.background = bg; sel.style.color = fg;
+            badge.className = 'res-group';
+            badge.style.background = bg; badge.style.color = fg;
+            badge.textContent = `第 ${group} 組`;
+        } else {
+            sel.classList.remove('chosen');
+            sel.style.background = ''; sel.style.color = '';
+            badge.className = 'res-group none';
+            badge.style.background = ''; badge.style.color = '';
+            badge.textContent = '未選組別';
+        }
+    }
+
+    function renderTones() {
+        const grid = $('grid-tone');
+        grid.innerHTML = '';
+        TONES.forEach(t => {
+            const b = document.createElement('button');
+            b.className = 'tile' + (state.tone === t.n ? ' selected' : '');
+            b.innerHTML = '<span class="n"></span><span class="ex"></span>';
+            b.querySelector('.n').textContent = t.n;
+            b.querySelector('.ex').textContent = t.ex;
+            b.addEventListener('click', () => pick('tone', t.n));
+            grid.appendChild(b);
+        });
+    }
+
+    function renderSlots() {
+        const set = (id, val, label) => {
+            const el = $(id);
+            if (val === null) {
+                el.className = 'slot';
+                el.innerHTML = '<small></small>';
+                el.firstChild.textContent = label;
+            } else {
+                el.className = 'slot filled';
+                el.textContent = val === '' ? '∅' : val;
+            }
+        };
+        set('slot-initial', state.initial, '聲母');
+        set('slot-final', state.final, '韻母');
+        set('slot-tone', state.tone, '聲調');
+    }
+
+    function renderAll() {
+        renderInitials(); renderFinalTabs(); renderFinals(); renderTones(); renderSlots();
+        fitLabels($('compose'));
+    }
+
+    $('group-select').addEventListener('change', (e) => {
+        group = parseInt(e.target.value, 10) || null;
+        try { localStorage.setItem('taigi-spell-answer-group', group ? String(group) : ''); } catch (err) {}
+        renderGroup();
+    });
+    $('final-scroll').addEventListener('scroll', syncActiveTab, { passive: true });
+
+    // ---------- 互動 ----------
+    function pick(type, value, cat) {
+        enterFullscreen();
+        if (state[type] === value) {               // 再點一次取消
+            state[type] = null;
+            if (type !== 'tone') state[type + 'Cat'] = null;
+        } else {
+            state[type] = value;
+            if (type !== 'tone') state[type + 'Cat'] = cat;
+        }
+        renderAll();
+        if (state.initial !== null && state.final !== null && state.tone !== null) {
+            showResult();
+        }
+    }
+
+    function clearAll() {
+        state.initial = state.initialCat = state.final = state.finalCat = state.tone = null;
+        renderAll();
+    }
+
+    function blockEl(text, cat, zero) {
+        const d = document.createElement('div');
+        d.className = 'res-block' + (zero ? ' zero' : '');
+        if (!zero) { d.style.background = cat.bg; d.style.color = cat.fg; }
+        const t = document.createElement('span');
+        t.className = 'txt';
+        t.textContent = text;
+        const c = document.createElement('span');
+        c.className = 'cat';
+        c.textContent = cat.name;
+        d.append(t, c);
+        return d;
+    }
+
+    function showResult() {
+        const word = $('res-word');
+        word.innerHTML = '';
+        const iCat = INITIAL_CATS[state.initialCat];
+        const fCat = FINAL_CATS[state.finalCat];
+        if (state.initial === '') word.appendChild(blockEl('∅', iCat, true));
+        else word.appendChild(blockEl(state.initial, iCat, false));
+        word.appendChild(blockEl(toneFinal(state.final, state.tone), fCat, false));
+        $('res-tone-num').textContent = state.tone;
+        $('result').classList.add('show');
+        resultShownAt = Date.now();
+        fitResult();
+    }
+
+    // 依舞台大小放大字級，讓整組拼音盡量佔滿畫面
+    function fitResult() {
+        const word = $('res-word');
+        const W = stage.clientWidth, H = stage.clientHeight;
+        let size = H * 0.5;
+        word.style.fontSize = size + 'px';
+        const w = word.scrollWidth, h = word.scrollHeight;
+        const scale = Math.min((W * 0.92) / w, (H * 0.6) / h, 1);
+        word.style.fontSize = Math.floor(size * scale) + 'px';
+    }
+
+    function backToCompose() {
+        if (Date.now() - resultShownAt < 350) return;   // 避免觸發結果的那一下立刻關掉
+        $('result').classList.remove('show');
+        clearAll();
+    }
+
+    // ---------- 全螢幕、橫式、螢幕常亮 ----------
+    let wakeLock = null;
+    async function keepAwake() {
+        try {
+            if ('wakeLock' in navigator && !wakeLock) {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => { wakeLock = null; });
+            }
+        } catch (e) { /* 不支援就略過 */ }
+    }
+    function enterFullscreen() {
+        keepAwake();
+        const el = document.documentElement;
+        if (document.fullscreenElement || document.webkitFullscreenElement) return;
+        const req = el.requestFullscreen || el.webkitRequestFullscreen;
+        if (!req) return;
+        try {
+            const p = req.call(el, { navigationUI: 'hide' });
+            if (p && p.then) {
+                p.then(() => {
+                    if (screen.orientation && screen.orientation.lock) {
+                        screen.orientation.lock('landscape').catch(() => {});
+                    }
+                }).catch(() => {});
+            }
+        } catch (e) { /* iPhone Safari 不支援元素全螢幕 */ }
+    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') { wakeLock = null; keepAwake(); }
+    });
+
+    // 直拿手機時把舞台轉成橫式；根字級隨舞台大小縮放
+    function layout() {
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const portrait = vh > vw;
+        const W = portrait ? vh : vw, H = portrait ? vw : vh;
+        stage.style.width = W + 'px';
+        stage.style.height = H + 'px';
+        stage.style.transform = portrait ? `translateX(${vw}px) rotate(90deg)` : 'none';
+        document.documentElement.style.fontSize = Math.max(9, Math.min(H / 19, W / 36)) + 'px';
+        setFinalCols();
+        fitLabels($('compose'));
+        if ($('result').classList.contains('show')) fitResult();
+    }
+    window.addEventListener('resize', layout);
+    window.addEventListener('orientationchange', () => setTimeout(layout, 150));
+
+    $('btn-clear').addEventListener('click', clearAll);
+    $('btn-fs').addEventListener('click', () => {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        } else {
+            enterFullscreen();
+        }
+    });
+    $('result').addEventListener('pointerdown', backToCompose);
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    layout();
+    renderGroup();
+    renderAll();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+})();
+</script>
+</body>
+</html>
