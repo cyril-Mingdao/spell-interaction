@@ -172,7 +172,10 @@
 
     /* 聲調區窄版：單欄 7 列，調號與例字左右並排 */
     .tone-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr; grid-auto-rows: 1fr; gap: 0.3rem; }
-    .tone-grid .tile { flex-direction: row; gap: 0.3rem; }
+    /* 調號與例字各佔半格：調號靠右、例字靠左，七個數字上下對齊成一直線 */
+    .tone-grid .tile { display: grid; grid-template-columns: 1fr 1fr; align-items: center; column-gap: 0.3rem; }
+    .tone-grid .tile .n { justify-self: end; font-variant-numeric: tabular-nums; }
+    .tone-grid .tile .ex { justify-self: start; }
     .panel-tone .panel-title { letter-spacing: 0.1em; }
     .tone-grid .tile .n { font-size: 1.25rem; }
     .tone-grid .tile .ex { font-size: 0.75rem; font-weight: 500; opacity: 0.8; }
