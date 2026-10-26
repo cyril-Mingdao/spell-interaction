@@ -108,8 +108,8 @@
         gap: 0.3rem;
     }
     .panel-initial { flex: 3.1; }
-    .panel-final   { flex: 6.2; }
-    .panel-tone    { flex: 2; }
+    .panel-final   { flex: 7.2; }
+    .panel-tone    { flex: 1; }
     .panel-title {
         flex: 0 0 auto;
         background: var(--yellow); color: var(--black);
@@ -170,11 +170,12 @@
     .tab.active { background: var(--white); border-color: var(--white); color: var(--black); }
     .tab.has-pick { box-shadow: inset 0 -0.25rem 0 var(--yellow); }
 
-    .tone-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 0.3rem; }
-    .tone-grid .tile { flex-direction: column; gap: 0.1rem; }
+    /* 聲調區窄版：單欄 7 列，調號與例字左右並排 */
+    .tone-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr; grid-auto-rows: 1fr; gap: 0.3rem; }
+    .tone-grid .tile { flex-direction: row; gap: 0.3rem; }
+    .panel-tone .panel-title { letter-spacing: 0.1em; }
     .tone-grid .tile .n { font-size: 1.25rem; }
     .tone-grid .tile .ex { font-size: 0.75rem; font-weight: 500; opacity: 0.8; }
-    .tone-grid .tile:last-child { grid-column: span 2; }
 
     /* ===== 結果頁（全螢幕舉牌） ===== */
     #result {
