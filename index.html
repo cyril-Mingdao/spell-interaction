@@ -99,6 +99,8 @@
         font-size: 0.85rem; font-weight: 800; white-space: nowrap;
     }
     .tool-btn:active { background: var(--yellow); color: var(--black); }
+    .fs-btn { aspect-ratio: 1 / 1; padding: 0.35rem; display: flex; align-items: center; justify-content: center; }
+    .fs-btn svg { width: 100%; height: 100%; display: block; }
 
     .panels { flex: 1; min-height: 0; display: flex; gap: 0.45rem; }
     .panel {
@@ -269,7 +271,7 @@
                 <div class="slot" id="slot-tone"><small>聲調</small></div>
             </div>
             <button class="tool-btn" id="btn-clear">清除</button>
-            <button class="tool-btn" id="btn-fs" title="全螢幕">⛶ 全螢幕</button>
+            <button class="tool-btn fs-btn" id="btn-fs" title="全螢幕" aria-label="全螢幕"></button>
         </div>
         <div class="panels">
             <div class="panel panel-initial">
@@ -630,7 +632,7 @@
 
     // ---------- 互動 ----------
     function pick(type, value, cat) {
-        enterFullscreen();
+        keepAwake();
         if (state[type] === value) {               // 再點一次取消
             state[type] = null;
             if (type !== 'tone') state[type + 'Cat'] = null;
@@ -742,13 +744,36 @@
     window.addEventListener('orientationchange', () => setTimeout(layout, 150));
 
     $('btn-clear').addEventListener('click', clearAll);
+    // 全螢幕：進頁面先試著全螢幕，瀏覽器不允許時改在第一次觸碰時進入；圖示鈕可退出／恢復
+    const FS_ICON_ENTER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>';
+    const FS_ICON_EXIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg>';
+    const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+    function updateFsBtn() {
+        const on = isFs();
+        $('btn-fs').innerHTML = on ? FS_ICON_EXIT : FS_ICON_ENTER;
+        $('btn-fs').title = on ? '退出全螢幕' : '全螢幕';
+        $('btn-fs').setAttribute('aria-label', $('btn-fs').title);
+        if (on) window.removeEventListener('pointerup', autoFs, true);   // 進過全螢幕後就不再自動進入
+    }
+    function autoFs(e) {
+        if (e.target.closest('#btn-fs, #btn-qr')) return;
+        enterFullscreen();
+    }
+    const fsRoot = document.documentElement;
+    if (!(fsRoot.requestFullscreen || fsRoot.webkitRequestFullscreen)) $('btn-fs').style.display = 'none';   // iPhone Safari 不支援
     $('btn-fs').addEventListener('click', () => {
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
+        window.removeEventListener('pointerup', autoFs, true);
+        if (isFs()) {
             (document.exitFullscreen || document.webkitExitFullscreen).call(document);
         } else {
             enterFullscreen();
         }
     });
+    document.addEventListener('fullscreenchange', updateFsBtn);
+    document.addEventListener('webkitfullscreenchange', updateFsBtn);
+    window.addEventListener('pointerup', autoFs, true);
+    updateFsBtn();
+    enterFullscreen();
     $('result').addEventListener('pointerdown', backToCompose);
     // QR code：全螢幕顯示，再點一下關閉
     let qrEnteredFs = false;
