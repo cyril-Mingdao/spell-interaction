@@ -172,9 +172,9 @@
     .tab.active { background: var(--white); border-color: var(--white); color: var(--black); }
     .tab.has-pick { box-shadow: inset 0 -0.25rem 0 var(--yellow); }
 
-    /* 聲調區窄版：單欄 7 列，調號與例字左右並排 */
+    /* 聲調區窄版：單欄 8 列，調號與例字左右並排 */
     .tone-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr; grid-auto-rows: 1fr; gap: 0.3rem; }
-    /* 調號與例字各佔半格：調號靠右、例字靠左，七個數字上下對齊成一直線 */
+    /* 調號與例字各佔半格：調號靠右、例字靠左，八個數字上下對齊成一直線 */
     .tone-grid .tile { display: grid; grid-template-columns: 1fr 1fr; align-items: center; column-gap: 0.3rem; }
     .tone-grid .tile .n { justify-self: end; font-variant-numeric: tabular-nums; }
     .tone-grid .tile .ex { justify-self: start; }
@@ -377,9 +377,9 @@
 
     const TONES = [
         { n: '1', ex: 'a' }, { n: '2', ex: 'á' }, { n: '3', ex: 'à' }, { n: '4', ex: 'ah' },
-        { n: '5', ex: 'â' }, { n: '7', ex: 'ā' }, { n: '8', ex: 'a̍h' }
+        { n: '5', ex: 'â' }, { n: '7', ex: 'ā' }, { n: '8', ex: 'a̍h' }, { n: '9', ex: 'a̋' }
     ];
-    const TONE_MARK = { '2': '́', '3': '̀', '5': '̂', '7': '̄', '8': '̍' };
+    const TONE_MARK = { '2': '́', '3': '̀', '5': '̂', '7': '̄', '8': '̍', '9': '̋' };
 
     // ---------- 自動標調符 ----------
     // 教育部台羅標調位置：a > oo/o > e > (iu、ui 標後一字) > i/u > 成音節 m、ng（標在 m、n 上）
